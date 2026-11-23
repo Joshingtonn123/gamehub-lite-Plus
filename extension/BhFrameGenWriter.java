@@ -15,7 +15,7 @@ import java.nio.channels.FileChannel;
  *   3:   NativeRenderingMode         — owned by host launcher, not touched here
  *   4-7: float flowScale (0.2..1.0)
  *   8:   AI model byte (0=standard, 1=clear)
- *   9:   AI multiplier byte (fixed 2x)
+ *   9:   AI multiplier byte (2..4)
  */
 public class BhFrameGenWriter {
 
@@ -52,7 +52,7 @@ public class BhFrameGenWriter {
                 buf.put(2, (byte) (s.enabled ? 1 : 0));
                 buf.putFloat(4, clampFloat(s.flowScale, 0.2f, 1.0f));
                 buf.put(8, (byte) (s.model & 0x01));
-                buf.put(9, (byte) 2);
+                buf.put(9, (byte) clampMultiplier(s.multiplier));
                 buf.force();
             }
         } catch (Exception ignored) {}
@@ -64,6 +64,10 @@ public class BhFrameGenWriter {
 
     public static void writeModel(String controlPath, int model) {
         writeByteAt(controlPath, 8, (byte) (model & 0x01));
+    }
+
+    public static void writeMultiplier(String controlPath, int multiplier) {
+        writeByteAt(controlPath, 9, (byte) clampMultiplier(multiplier));
     }
 
     public static void writeFlowScale(String controlPath, float flowScale) {
@@ -87,6 +91,10 @@ public class BhFrameGenWriter {
             buf.put(offset, value);
             buf.force();
         } catch (Exception ignored) {}
+    }
+
+    private static int clampMultiplier(int value) {
+        return Math.max(2, Math.min(4, value));
     }
 
     private static float clampFloat(float v, float lo, float hi) {
