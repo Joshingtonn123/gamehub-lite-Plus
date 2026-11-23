@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# GameHub Lite Patcher
+# GameHub Lite Plus Patcher
 # Applies patches to GameHub 5.1.0 APK to create GameHub Lite
 #
 
@@ -59,7 +59,7 @@ get_variant_package() {
 
 # Source APK (can be overridden)
 SOURCE_APK="${1:-$SCRIPT_DIR/apk/GameHub-5.1.0.apk}"
-OUTPUT_APK="$OUTPUT_DIR/GameHub-Lite.apk"
+OUTPUT_APK="$OUTPUT_DIR/GameHub-Lite-Plus.apk"
 
 print_step() {
     echo -e "${BLUE}==>${NC} $1"
@@ -143,7 +143,7 @@ get_output_filename() {
         if [ "$RELEASE" = "true" ]; then
             echo "$OUTPUT_DIR/GameHub-Lite-v${VERSION}.apk"
         else
-            echo "$OUTPUT_DIR/GameHub-Lite.apk"
+            echo "$OUTPUT_DIR/GameHub-Lite-Plus.apk"
         fi
     else
         echo "$OUTPUT_DIR/GameHub-Lite-v${VERSION}-${variant}.apk"
@@ -571,7 +571,7 @@ cleanup() {
 show_result() {
     echo ""
     echo -e "${GREEN}========================================${NC}"
-    echo -e "${GREEN}  GameHub Lite build complete!${NC}"
+    echo -e "${GREEN}  GameHub Lite Plus build complete!${NC}"
     echo -e "${GREEN}========================================${NC}"
     echo ""
 
@@ -604,7 +604,7 @@ BUILT_APKS=""
 main() {
     echo ""
     echo "====================================="
-    echo "  GameHub Lite Patcher v1.0"
+    echo "  GameHub Lite Plus Patcher v1.0"
     echo "====================================="
     echo ""
 
