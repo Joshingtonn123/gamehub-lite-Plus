@@ -93,8 +93,8 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: GameHub-Lite-debug
-          path: output/GameHub-Lite.apk
+          name: GameHub-Lite-Plus-debug
+          path: output/GameHub-Lite-Plus.apk
           retention-days: 30
 
       # Regenerate patches from the built APK and compare against repo.
@@ -105,7 +105,7 @@ jobs:
         run: |
           cp -r patches/ /tmp/repo-patches/
 
-          ./generate-patches.sh apk/GameHub-5.1.0.apk output/GameHub-Lite.apk
+          ./generate-patches.sh apk/GameHub-5.1.0.apk output/GameHub-Lite-Plus.apk
 
           if diff -rq /tmp/repo-patches/diffs/ patches/diffs/ > /dev/null 2>&1 && \
              diff -q /tmp/repo-patches/files_to_patch.txt patches/files_to_patch.txt > /dev/null 2>&1 && \
