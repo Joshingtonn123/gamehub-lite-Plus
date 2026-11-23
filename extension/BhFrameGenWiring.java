@@ -36,38 +36,13 @@ public class BhFrameGenWiring {
         }
         if (container != null) container.setVisibility(View.VISIBLE);
 
+        // The enable switch already lives in the Performance panel.
+        // Keep only the settings gear in Controls to avoid a duplicate toggle.
         final View gearButton = viewById(root, "btn_frame_gen_settings");
-        final View switchView = viewById(root, "switch_frame_gen");
-
-        if (switchView != null) {
-            BhFrameGenSettings settings = BhFrameGenSettings.load(ctx);
-
-            invokeSetSwitch(switchView, settings.enabled);
-
-            if (gearButton != null) {
-                gearButton.setVisibility(settings.enabled ? View.VISIBLE : View.GONE);
-                gearButton.setOnClickListener(v -> BhFrameGenDialog.show(ctx));
-            }
-
-            switchView.setOnClickListener(v -> {
-                BhFrameGenSettings s = BhFrameGenSettings.load(ctx);
-                boolean newState = !s.enabled;
-                s.enabled = newState;
-                invokeSetSwitch(v, newState);
-                BhFrameGenWriter.writeEnabled(BhFrameGenWriter.resolveControlPath(ctx), newState);
-                s.save(ctx);
-                if (gearButton != null) {
-                    gearButton.setVisibility(newState ? View.VISIBLE : View.GONE);
-                }
-            });
+        if (gearButton != null) {
+            gearButton.setVisibility(View.VISIBLE);
+            gearButton.setOnClickListener(v -> BhFrameGenDialog.show(ctx));
         }
     }
 
-    /** SidebarSwitchItemView is part of the patched app, not on this extension's classpath. */
-    private static void invokeSetSwitch(View view, boolean value) {
-        try {
-            Method m = view.getClass().getMethod("setSwitch", boolean.class);
-            m.invoke(view, value);
-        } catch (Throwable ignored) {}
-    }
 }
