@@ -25,6 +25,8 @@ public class BhFrameGenDialog extends Dialog {
     private final BhFrameGenSettings settings;
     private final String controlPath;
 
+    private SeekBar sbMultiplier;
+    private TextView tvMultiplierValue;
     private SeekBar sbFlowScale;
     private TextView tvFlowScaleValue;
     private TextView tvPresetDesc;
@@ -160,6 +162,58 @@ public class BhFrameGenDialog extends Dialog {
         descLp.bottomMargin = dp(8);
         tvPresetDesc.setLayoutParams(descLp);
         body.addView(tvPresetDesc);
+
+        LinearLayout multiplierHeaderRow = new LinearLayout(ctx);
+        multiplierHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
+        multiplierHeaderRow.setLayoutParams(rowLp());
+
+        TextView multiplierHeader = new TextView(ctx);
+        multiplierHeader.setText(getStringByName("bh_framegen_dialog_multiplier", "Frame multiplier"));
+        multiplierHeader.setTextColor(Color.WHITE);
+        multiplierHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
+        LinearLayout.LayoutParams multiplierHeaderLp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        multiplierHeader.setLayoutParams(multiplierHeaderLp);
+        multiplierHeaderRow.addView(multiplierHeader);
+
+        tvMultiplierValue = new TextView(ctx);
+        tvMultiplierValue.setTextColor(Color.parseColor("#ffaaaaaa"));
+        tvMultiplierValue.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
+        tvMultiplierValue.setText(settings.multiplier + "x");
+        multiplierHeaderRow.addView(tvMultiplierValue);
+        body.addView(multiplierHeaderRow);
+
+        sbMultiplier = new SeekBar(ctx);
+        sbMultiplier.setMax(2);
+        sbMultiplier.setProgress(settings.multiplier - 2);
+        sbMultiplier.setLayoutParams(seekBarLp());
+        sbMultiplier.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                int multiplier = progress + 2;
+                tvMultiplierValue.setText(multiplier + "x");
+                if (!fromUser) return;
+                settings.multiplier = multiplier;
+                BhFrameGenWriter.writeMultiplier(controlPath, multiplier);
+                settings.save(getContext());
+            }
+            @Override public void onStartTrackingTouch(SeekBar b) {}
+            @Override public void onStopTrackingTouch(SeekBar b) {}
+        });
+        body.addView(sbMultiplier);
+
+        LinearLayout multiplierTickRow = new LinearLayout(ctx);
+        multiplierTickRow.setOrientation(LinearLayout.HORIZONTAL);
+        multiplierTickRow.setLayoutParams(rowLp());
+        for (int multiplier = 2; multiplier <= 4; multiplier++) {
+            TextView tick = new TextView(ctx);
+            tick.setText(multiplier + "x");
+            tick.setTextColor(Color.parseColor("#ff888e99"));
+            tick.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f);
+            tick.setGravity(Gravity.CENTER);
+            multiplierTickRow.addView(tick, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        }
+        body.addView(multiplierTickRow);
 
         body.addView(divider());
 
