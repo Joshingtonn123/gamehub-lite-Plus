@@ -65,7 +65,7 @@ public class BhFrameGenDialog extends Dialog {
         LinearLayout panel = new LinearLayout(ctx);
         panel.setOrientation(LinearLayout.VERTICAL);
         FrameLayout.LayoutParams panelLp = new FrameLayout.LayoutParams(
-                dp(320), ViewGroup.LayoutParams.WRAP_CONTENT);
+                dp(320), ViewGroup.LayoutParams.MATCH_PARENT);
         panelLp.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
         panelLp.rightMargin = dp(24);
         panelLp.bottomMargin = dp(16);
@@ -91,7 +91,7 @@ public class BhFrameGenDialog extends Dialog {
 
         ScrollView scroll = new ScrollView(ctx);
         LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
         scrollLp.leftMargin = dp(16);
         scrollLp.rightMargin = dp(16);
         scroll.setLayoutParams(scrollLp);
