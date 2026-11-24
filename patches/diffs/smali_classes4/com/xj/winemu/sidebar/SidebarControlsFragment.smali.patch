@@ -56,7 +56,6 @@ index b6c70a374..ec65cf1d5 100644
 +    invoke-virtual {v1, v3}, Landroid/view/View;->setVisibility(I)V
 +    
 +    :cond_skip_rts
-    invoke-static {p0}, Lcom/xj/winemu/sidebar/BhFrameGenWiring;->bindFromFragment(Ljava/lang/Object;)V
 
      invoke-virtual {p0}, Lcom/xj/base/base/fragment/BaseVmFragment;->T()Landroidx/databinding/ViewDataBinding;
  
