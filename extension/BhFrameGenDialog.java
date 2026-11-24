@@ -14,33 +14,19 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.util.Locale;
-
 public class BhFrameGenDialog extends Dialog {
-
     private final BhFrameGenSettings settings;
-    private final String controlPath;
-
-    private SeekBar sbMultiplier;
-    private TextView tvMultiplierValue;
-    private SeekBar sbFlowScale;
-    private TextView tvFlowScaleValue;
-    private TextView tvPresetDesc;
-    private TextView tvPresetLabel;
 
     public BhFrameGenDialog(Context context) {
         super(context);
-        this.settings = BhFrameGenSettings.load(context);
-        this.controlPath = BhFrameGenWriter.resolveControlPath(context);
+        settings = BhFrameGenSettings.load(context);
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    @Override protected void onCreate(Bundle state) {
+        super.onCreate(state);
         Window w = getWindow();
         if (w != null) {
             w.requestFeature(Window.FEATURE_NO_TITLE);
@@ -52,307 +38,102 @@ public class BhFrameGenDialog extends Dialog {
             w.setAttributes(lp);
             w.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
-        setContentView(buildContentView());
+        setContentView(buildView());
     }
 
-    private View buildContentView() {
-        Context ctx = getContext();
-
-        FrameLayout root = new FrameLayout(ctx);
-        root.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        LinearLayout panel = new LinearLayout(ctx);
+    private View buildView() {
+        Context c = getContext();
+        FrameLayout root = new FrameLayout(c);
+        LinearLayout panel = new LinearLayout(c);
         panel.setOrientation(LinearLayout.VERTICAL);
-        FrameLayout.LayoutParams panelLp = new FrameLayout.LayoutParams(
-                dp(320), ViewGroup.LayoutParams.MATCH_PARENT);
-        panelLp.gravity = Gravity.END | Gravity.CENTER_VERTICAL;
+        FrameLayout.LayoutParams panelLp = new FrameLayout.LayoutParams(dp(320),
+                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL);
         panelLp.rightMargin = dp(24);
-        panelLp.bottomMargin = dp(16);
-        panelLp.topMargin = dp(16);
         panel.setLayoutParams(panelLp);
+        panel.setPadding(dp(16), dp(16), dp(16), dp(12));
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(Color.parseColor("#ff1f1f24"));
         bg.setCornerRadius(dp(10));
         panel.setBackground(bg);
-        panel.setPadding(0, dp(8), 0, dp(8));
         root.addView(panel);
 
-        TextView title = new TextView(ctx);
-        title.setText(getStringByName("bh_framegen_title", "Frame Generation"));
+        TextView title = new TextView(c);
+        title.setText("Frame Generation");
         title.setTextColor(Color.WHITE);
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f);
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         title.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleLp.bottomMargin = dp(8);
-        title.setLayoutParams(titleLp);
         panel.addView(title);
 
-        ScrollView scroll = new ScrollView(ctx);
-        LinearLayout.LayoutParams scrollLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f);
-        scrollLp.leftMargin = dp(16);
-        scrollLp.rightMargin = dp(16);
-        scroll.setLayoutParams(scrollLp);
-        panel.addView(scroll);
-
-        LinearLayout body = new LinearLayout(ctx);
-        body.setOrientation(LinearLayout.VERTICAL);
-        body.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        scroll.addView(body);
-
-        TextView presetHeader = new TextView(ctx);
-        presetHeader.setText(getStringByName("bh_framegen_dialog_preset", "Preset"));
-        presetHeader.setTextColor(Color.WHITE);
-        presetHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
-        presetHeader.setLayoutParams(headerLp());
-        body.addView(presetHeader);
-
-        tvPresetLabel = new TextView(ctx);
-        tvPresetLabel.setTextColor(Color.parseColor("#ffaaaaaa"));
-        tvPresetLabel.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
-        tvPresetLabel.setLayoutParams(headerLp());
-        body.addView(tvPresetLabel);
-
-        SeekBar sbPreset = new SeekBar(ctx);
-        sbPreset.setMax(BhFrameGenSettings.Preset.values().length - 1);
-        sbPreset.setProgress(settings.preset.ordinal());
-        sbPreset.setLayoutParams(seekBarLp());
-        sbPreset.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
-                if (!fromUser) return;
-                BhFrameGenSettings.Preset p = BhFrameGenSettings.Preset.values()[progress];
-                settings.applyPreset(p);
-                BhFrameGenWriter.write(controlPath, settings);
-                settings.save(getContext());
-                if (sbFlowScale != null) sbFlowScale.setProgress(flowScaleToProgress(settings.flowScale));
-                if (tvFlowScaleValue != null) tvFlowScaleValue.setText(formatFloat(settings.flowScale));
-                updatePresetLabel();
-                updatePresetDescription();
-            }
-            @Override public void onStartTrackingTouch(SeekBar b) {}
-            @Override public void onStopTrackingTouch(SeekBar b) {}
-        });
-        body.addView(sbPreset);
-
-        LinearLayout presetTickRow = new LinearLayout(ctx);
-        presetTickRow.setOrientation(LinearLayout.HORIZONTAL);
-        presetTickRow.setLayoutParams(rowLp());
-        for (BhFrameGenSettings.Preset p : BhFrameGenSettings.Preset.values()) {
-            TextView tv = new TextView(ctx);
-            tv.setText(p.getLabel(ctx));
-            tv.setTextColor(Color.parseColor("#ff888e99"));
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f);
-            tv.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            tv.setLayoutParams(lp);
-            presetTickRow.addView(tv);
-        }
-        body.addView(presetTickRow);
-
-        tvPresetDesc = new TextView(ctx);
-        tvPresetDesc.setTextColor(Color.parseColor("#ff888e99"));
-        tvPresetDesc.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f);
-        LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(
+        TextView label = new TextView(c);
+        label.setText("Frame multiplier");
+        label.setTextColor(Color.WHITE);
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        descLp.topMargin = dp(6);
-        descLp.bottomMargin = dp(8);
-        tvPresetDesc.setLayoutParams(descLp);
-        body.addView(tvPresetDesc);
+        labelLp.topMargin = dp(18);
+        panel.addView(label, labelLp);
 
-        LinearLayout multiplierHeaderRow = new LinearLayout(ctx);
-        multiplierHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
-        multiplierHeaderRow.setLayoutParams(rowLp());
+        final TextView value = new TextView(c);
+        value.setTextColor(Color.LTGRAY);
+        value.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        value.setGravity(Gravity.END);
+        value.setText(settings.multiplier + "x");
+        panel.addView(value);
 
-        TextView multiplierHeader = new TextView(ctx);
-        multiplierHeader.setText(getStringByName("bh_framegen_dialog_multiplier", "Frame multiplier"));
-        multiplierHeader.setTextColor(Color.WHITE);
-        multiplierHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
-        LinearLayout.LayoutParams multiplierHeaderLp = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        multiplierHeader.setLayoutParams(multiplierHeaderLp);
-        multiplierHeaderRow.addView(multiplierHeader);
-
-        tvMultiplierValue = new TextView(ctx);
-        tvMultiplierValue.setTextColor(Color.parseColor("#ffaaaaaa"));
-        tvMultiplierValue.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
-        tvMultiplierValue.setText(settings.multiplier + "x");
-        multiplierHeaderRow.addView(tvMultiplierValue);
-        body.addView(multiplierHeaderRow);
-
-        sbMultiplier = new SeekBar(ctx);
-        sbMultiplier.setMax(2);
-        sbMultiplier.setProgress(settings.multiplier - 2);
-        sbMultiplier.setLayoutParams(seekBarLp());
-        sbMultiplier.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        SeekBar slider = new SeekBar(c);
+        slider.setMax(2);
+        slider.setProgress(settings.multiplier - 2);
+        panel.addView(slider, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        slider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
                 int multiplier = progress + 2;
-                tvMultiplierValue.setText(multiplier + "x");
-                if (!fromUser) return;
-                settings.multiplier = multiplier;
-                BhFrameGenWriter.writeMultiplier(controlPath, multiplier);
-                settings.save(getContext());
+                value.setText(multiplier + "x");
+                if (fromUser) {
+                    settings.multiplier = multiplier;
+                    settings.save(getContext());
+                    BhFrameGenWriter.writeMultiplier(
+                            BhFrameGenWriter.resolveControlPath(getContext()), multiplier);
+                }
             }
-            @Override public void onStartTrackingTouch(SeekBar b) {}
-            @Override public void onStopTrackingTouch(SeekBar b) {}
+            @Override public void onStartTrackingTouch(SeekBar bar) {}
+            @Override public void onStopTrackingTouch(SeekBar bar) {}
         });
-        body.addView(sbMultiplier);
 
-        LinearLayout multiplierTickRow = new LinearLayout(ctx);
-        multiplierTickRow.setOrientation(LinearLayout.HORIZONTAL);
-        multiplierTickRow.setLayoutParams(rowLp());
-        for (int multiplier = 2; multiplier <= 4; multiplier++) {
-            TextView tick = new TextView(ctx);
-            tick.setText(multiplier + "x");
-            tick.setTextColor(Color.parseColor("#ff888e99"));
-            tick.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f);
-            tick.setGravity(Gravity.CENTER);
-            multiplierTickRow.addView(tick, new LinearLayout.LayoutParams(
-                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        LinearLayout ticks = new LinearLayout(c);
+        ticks.setOrientation(LinearLayout.HORIZONTAL);
+        for (int n = 2; n <= 4; n++) {
+            TextView t = new TextView(c);
+            t.setText(n + "x");
+            t.setTextColor(Color.LTGRAY);
+            t.setGravity(Gravity.CENTER);
+            ticks.addView(t, new LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         }
-        body.addView(multiplierTickRow);
+        panel.addView(ticks);
 
-        body.addView(divider());
-
-        LinearLayout flowHeaderRow = new LinearLayout(ctx);
-        flowHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
-        flowHeaderRow.setLayoutParams(rowLp());
-
-        TextView flowHeader = new TextView(ctx);
-        flowHeader.setText(getStringByName("bh_framegen_dialog_flow_scale", "Flow scale"));
-        flowHeader.setTextColor(Color.WHITE);
-        flowHeader.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
-        LinearLayout.LayoutParams flowHeaderLp = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        flowHeader.setLayoutParams(flowHeaderLp);
-        flowHeaderRow.addView(flowHeader);
-
-        tvFlowScaleValue = new TextView(ctx);
-        tvFlowScaleValue.setTextColor(Color.parseColor("#ffaaaaaa"));
-        tvFlowScaleValue.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f);
-        tvFlowScaleValue.setText(formatFloat(settings.flowScale));
-        flowHeaderRow.addView(tvFlowScaleValue);
-
-        body.addView(flowHeaderRow);
-
-        sbFlowScale = new SeekBar(ctx);
-        sbFlowScale.setMax(80);
-        sbFlowScale.setProgress(flowScaleToProgress(settings.flowScale));
-        sbFlowScale.setLayoutParams(seekBarLp());
-        sbFlowScale.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
-                float v = progressToFlowScale(progress);
-                tvFlowScaleValue.setText(formatFloat(v));
-                if (!fromUser) return;
-                settings.flowScale = v;
-                BhFrameGenWriter.writeFlowScale(controlPath, v);
-                settings.save(getContext());
-            }
-            @Override public void onStartTrackingTouch(SeekBar b) {}
-            @Override public void onStopTrackingTouch(SeekBar b) {}
-        });
-        body.addView(sbFlowScale);
-
-        updatePresetLabel();
-        updatePresetDescription();
-
-        TextView btnClose = new TextView(ctx);
-        btnClose.setText(getStringByName("rts_gesture_settings_close", "Close"));
-        btnClose.setTextColor(Color.parseColor("#fff0f0f0"));
-        btnClose.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f);
-        btnClose.setGravity(Gravity.CENTER);
-        btnClose.setBackgroundColor(Color.parseColor("#ff3b82f6"));
-        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(30));
-        btnLp.topMargin = dp(10);
-        btnLp.leftMargin = dp(40);
-        btnLp.rightMargin = dp(40);
-        btnClose.setLayoutParams(btnLp);
-        btnClose.setOnClickListener(v -> dismiss());
-        panel.addView(btnClose);
-
+        TextView close = new TextView(c);
+        close.setText("Close");
+        close.setTextColor(Color.WHITE);
+        close.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        close.setGravity(Gravity.CENTER);
+        close.setBackgroundColor(Color.parseColor("#ff3b82f6"));
+        LinearLayout.LayoutParams closeLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(36));
+        closeLp.topMargin = dp(18);
+        panel.addView(close, closeLp);
+        close.setOnClickListener(v -> dismiss());
         return root;
     }
 
-    private LinearLayout.LayoutParams rowLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(8);
-        lp.bottomMargin = dp(4);
-        return lp;
-    }
-
-    private LinearLayout.LayoutParams headerLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(8);
-        return lp;
-    }
-
-    private LinearLayout.LayoutParams seekBarLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.topMargin = dp(4);
-        lp.bottomMargin = dp(4);
-        return lp;
-    }
-
-    private View divider() {
-        View v = new View(getContext());
-        v.setBackgroundColor(Color.parseColor("#22ffffff"));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(1));
-        lp.topMargin = dp(8);
-        lp.bottomMargin = dp(4);
-        v.setLayoutParams(lp);
-        return v;
-    }
-
-    private int dp(int v) {
-        float density = getContext().getResources().getDisplayMetrics().density;
-        return (int) (v * density + 0.5f);
-    }
-
-    private static int flowScaleToProgress(float flowScale) {
-        int p = Math.round((flowScale - 0.2f) * 100f);
-        if (p < 0) p = 0;
-        if (p > 80) p = 80;
-        return p;
-    }
-
-    private static float progressToFlowScale(int progress) {
-        return 0.2f + (progress / 100f);
-    }
-
-    private static String formatFloat(float v) {
-        return String.format(Locale.ROOT, "%.2f", v);
-    }
-
-    private void updatePresetLabel() {
-        if (tvPresetLabel == null) return;
-        Context ctx = getContext();
-        String suffix = getStringByName("bh_framegen_dialog_mode_suffix", " mode");
-        tvPresetLabel.setText(settings.preset.getLabel(ctx) + suffix);
-    }
-
-    private void updatePresetDescription() {
-        if (tvPresetDesc == null) return;
-        tvPresetDesc.setText(settings.preset.getDescription(getContext()));
-    }
-
-    private String getStringByName(String name, String fallback) {
-        Context c = getContext();
-        int id = c.getResources().getIdentifier(name, "string", c.getPackageName());
-        return id != 0 ? c.getString(id) : fallback;
+    private int dp(int value) {
+        return (int) (value * getContext().getResources().getDisplayMetrics().density + 0.5f);
     }
 
     public static void show(Context ctx) {
         try {
             BhFrameGenDialog d = new BhFrameGenDialog(ctx);
-            d.setCancelable(false);
+            d.setCancelable(true);
             d.show();
         } catch (Exception ignored) {}
     }
